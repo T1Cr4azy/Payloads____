@@ -7,7 +7,7 @@ if ($service -eq $null) {
     # Solicitar privilégios administrativos
     $scriptPath = $MyInvocation.MyCommand.Path
     $arguments = "-ExecutionPolicy Bypass -File `"$scriptPath`""
-    Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -Verb RunAs
+    Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
     Exit
 }
 
